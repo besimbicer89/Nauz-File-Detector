@@ -25,7 +25,8 @@
 #include <QDialog>
 #include <QFileDialog>
 #include "dialogoptions.h"
-#include "dialogstaticscan.h"
+#include "dialogstaticscanprocess.h"
+#include "xoptions.h"
 
 namespace Ui {
 class DialogDirectoryScan;
@@ -36,7 +37,7 @@ class DialogDirectoryScan : public QDialog
     Q_OBJECT
 
 public:
-    explicit DialogDirectoryScan(QWidget *parent, NFD::OPTIONS *pOptions, QString sDirName);
+    explicit DialogDirectoryScan(QWidget *pParent,XOptions *pOptions,QString sDirName);
     ~DialogDirectoryScan();
 
 private slots:
@@ -54,7 +55,7 @@ signals:
 
 private:
     Ui::DialogDirectoryScan *ui;
-    NFD::OPTIONS *pOptions;
+    XOptions *pOptions;
 };
 
 #endif // DIALOGDIRECTORYSCAN_H

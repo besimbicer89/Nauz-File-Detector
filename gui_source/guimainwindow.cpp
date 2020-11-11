@@ -21,8 +21,8 @@
 #include "guimainwindow.h"
 #include "ui_guimainwindow.h"
 
-GuiMainWindow::GuiMainWindow(QWidget *parent) :
-    QMainWindow(parent),
+GuiMainWindow::GuiMainWindow(QWidget *pParent) :
+    QMainWindow(pParent),
     ui(new Ui::GuiMainWindow)
 {
     ui->setupUi(this);
@@ -31,18 +31,33 @@ GuiMainWindow::GuiMainWindow(QWidget *parent) :
 
     setAcceptDrops(true);
 
-    DialogOptions::loadOptions(&nfdOptions);
+    xOptions.setName(X_OPTIONSFILE);
+
+    QList<XOptions::ID> listIDs;
+
+    listIDs.append(XOptions::ID_SCANAFTEROPEN);
+    listIDs.append(XOptions::ID_RECURSIVESCAN);
+    listIDs.append(XOptions::ID_DEEPSCAN);
+    listIDs.append(XOptions::ID_HERISTICSCAN);
+    listIDs.append(XOptions::ID_STAYONTOP);
+    listIDs.append(XOptions::ID_SAVELASTDIRECTORY);
+    listIDs.append(XOptions::ID_LASTDIRECTORY);
+
+    xOptions.setValueIDs(listIDs);
+    xOptions.load();
+
     adjust();
 
     if(QCoreApplication::arguments().count()>1)
     {
+        // TODO set lineedit
         _scan(QCoreApplication::arguments().at(1));
     }
 }
 
 GuiMainWindow::~GuiMainWindow()
 {
-    DialogOptions::saveOptions(&nfdOptions);
+    xOptions.save();
 
     delete ui;
 }
@@ -59,19 +74,18 @@ void GuiMainWindow::scanFile(QString sFileName)
         options.bDeepScan=ui->checkBoxDeepScan->isChecked();
         options.bHeuristicScan=ui->checkBoxHeuristicScan->isChecked();
 
-        DialogStaticScan ds(this);
+//#ifdef QT_DEBUG
+//        options.bIsTest=true;
+//#endif
+
+        DialogStaticScanProcess ds(this);
         ds.setData(sFileName,&options,&scanResult);
         ds.exec();
 
-        if(nfdOptions.bSaveLastDirectory)
-        {
-            QFileInfo fi(sFileName);
-            nfdOptions.sLastDirectory=fi.absolutePath();
-        }
-
-        QString sSaveDirectory=nfdOptions.sLastDirectory+QDir::separator()+"result"; // mb TODO
-
+        QString sSaveDirectory=xOptions.getLastDirectory()+QDir::separator()+"result"; // mb TODO
         ui->widgetResult->setData(scanResult,sSaveDirectory);
+
+        xOptions.setLastDirectory(sFileName);
     }
 }
 
@@ -87,7 +101,7 @@ void GuiMainWindow::_scan(QString sName)
     }
     else if(fi.isDir())
     {
-        DialogDirectoryScan dds(this,&nfdOptions,sName);
+        DialogDirectoryScan dds(this,&xOptions,sName);
         dds.exec();
 
         adjust();
@@ -101,22 +115,15 @@ void GuiMainWindow::on_pushButtonExit_clicked()
 
 void GuiMainWindow::on_pushButtonOpenFile_clicked()
 {
-    QString sDirectory;
+    QString sDirectory=xOptions.getLastDirectory();
 
-    if( (nfdOptions.bSaveLastDirectory)&&
-        (nfdOptions.sLastDirectory!="")&&
-        (QDir().exists(nfdOptions.sLastDirectory)))
-    {
-        sDirectory=nfdOptions.sLastDirectory;
-    }
-
-    QString sFileName=QFileDialog::getOpenFileName(this,tr("Open file")+QString("..."),sDirectory,tr("All files (*)"));
+    QString sFileName=QFileDialog::getOpenFileName(this,tr("Open file")+QString("..."),sDirectory,tr("All files")+QString(" (*)"));
 
     if(!sFileName.isEmpty())
     {
         ui->lineEditFileName->setText(sFileName);
     
-        if(nfdOptions.bScanAfterOpen)
+        if(xOptions.isScanAfterOpen())
         {
             _scan(sFileName);
         }
@@ -161,7 +168,7 @@ void GuiMainWindow::dropEvent(QDropEvent *event)
 
             sFileName=XBinary::convertFileName(sFileName);
 
-            if(nfdOptions.bScanAfterOpen)
+            if(xOptions.isScanAfterOpen())
             {
                 _scan(sFileName);
             }
@@ -171,7 +178,7 @@ void GuiMainWindow::dropEvent(QDropEvent *event)
 
 void GuiMainWindow::on_pushButtonOptions_clicked()
 {
-    DialogOptions dialogOptions(this,&nfdOptions);
+    DialogOptions dialogOptions(this,&xOptions);
 
     dialogOptions.exec();
 
@@ -180,28 +187,18 @@ void GuiMainWindow::on_pushButtonOptions_clicked()
 
 void GuiMainWindow::adjust()
 {
-    Qt::WindowFlags wf=windowFlags();
+    xOptions.adjustStayOnTop(this);
 
-    if(nfdOptions.bStayOnTop)
-    {
-        wf|=Qt::WindowStaysOnTopHint;
-    }
-    else
-    {
-        wf&=~(Qt::WindowStaysOnTopHint);
-    }
-    setWindowFlags(wf);
-
-    ui->checkBoxDeepScan->setChecked(nfdOptions.bDeepScan);
-    ui->checkBoxRecursiveScan->setChecked(nfdOptions.bRecursiveScan);
-    ui->checkBoxHeuristicScan->setChecked(nfdOptions.bHeristicScan);
+    ui->checkBoxDeepScan->setChecked(xOptions.isDeepScan());
+    ui->checkBoxRecursiveScan->setChecked(xOptions.isRecursiveScan());
+    ui->checkBoxHeuristicScan->setChecked(xOptions.isHeuristicScan());
 
     show();
 }
 
 void GuiMainWindow::on_pushButtonDirectoryScan_clicked()
 {
-    DialogDirectoryScan dds(this,&nfdOptions,"");
+    DialogDirectoryScan dds(this,&xOptions,"");
 
     dds.exec();
 

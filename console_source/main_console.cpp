@@ -24,31 +24,6 @@
 #include "staticscanitemmodel.h"
 #include "../global.h"
 
-// TODO QBinary
-void FindFiles(QString sFileName,QList<QString> *pListFileNames)
-{
-    if((sFileName!=".")&&(sFileName!=".."))
-    {
-        QFileInfo fi(sFileName);
-
-        if(fi.isFile())
-        {
-            pListFileNames->append(fi.absoluteFilePath());
-        }
-        else if(fi.isDir())
-        {
-            QDir dir(sFileName);
-
-            QFileInfoList eil=dir.entryInfoList();
-
-            for(int i=0;i<eil.count();i++)
-            {
-                FindFiles(eil.at(i).absoluteFilePath(),pListFileNames);
-            }
-        }
-    }
-}
-
 void ScanFiles(QList<QString> *pListArgs,SpecAbstract::SCAN_OPTIONS *pScanOptions)
 {
     QList<QString> listFileNames;
@@ -59,7 +34,7 @@ void ScanFiles(QList<QString> *pListArgs,SpecAbstract::SCAN_OPTIONS *pScanOption
 
         if(QFileInfo::exists(sFileName))
         {
-            FindFiles(sFileName,&listFileNames);
+            XBinary::findFiles(sFileName,&listFileNames);
         }
         else
         {
@@ -97,7 +72,7 @@ int main(int argc, char *argv[])
     QCommandLineParser parser;
     QString sDescription;
     sDescription.append(QString("%1 v%2\n").arg(X_APPLICATIONNAME).arg(X_APPLICATIONVERSION));
-    sDescription.append(QString("%1\n").arg("Copyright(C) 2018-2019 hors<horsicq@gmail.com> Web: http://ntinfo.biz"));
+    sDescription.append(QString("%1\n").arg("Copyright(C) 2018-2020 hors<horsicq@gmail.com> Web: http://ntinfo.biz"));
     parser.setApplicationDescription(sDescription);
     parser.addHelpOption();
     parser.addVersionOption();
@@ -106,7 +81,7 @@ int main(int argc, char *argv[])
 
     QCommandLineOption clRecursiveScan(QStringList()<<"r"<<"recursivescan","Recursive scan.");
     QCommandLineOption clDeepScan(QStringList()<<"d"<<"deepscan","Deep scan.");
-    QCommandLineOption clHeuristicScan(QStringList()<<"h"<<"heuristicscan","Heuristic scan.");
+    QCommandLineOption clHeuristicScan(QStringList()<<"e"<<"heuristicscan","Heuristic scan.");
     QCommandLineOption clResultAsXml(QStringList()<<"x"<<"xml","Result as XML.");
     QCommandLineOption clResultAsJson(QStringList()<<"j"<<"json","Result as JSON.");
 

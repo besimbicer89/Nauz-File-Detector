@@ -26,10 +26,11 @@
 #include <QFileDialog>
 #include <QDragEnterEvent>
 #include <QMimeData>
-#include "dialogstaticscan.h"
+#include "dialogstaticscanprocess.h"
 #include "dialogabout.h"
 #include "dialogoptions.h"
 #include "dialogdirectoryscan.h"
+#include "xoptions.h"
 
 namespace Ui
 {
@@ -41,7 +42,7 @@ class GuiMainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit GuiMainWindow(QWidget *parent = nullptr);
+    explicit GuiMainWindow(QWidget *pParent=nullptr);
     ~GuiMainWindow() override;
 
 private slots:
@@ -62,7 +63,7 @@ protected:
 
 private:
     Ui::GuiMainWindow *ui;
-    NFD::OPTIONS nfdOptions;
+    XOptions xOptions;
 };
 
 #endif // GUIMAINWINDOW_H
